@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Card AR Demo</title>
+    <!-- A-Frame (3D) と AR.js（WebAR用）のCDN。インターネット接続が必要です -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.3/aframe/build/aframe-ar.js"></script>
+    <style>body{margin:0;overflow:hidden;background:#000}</style>
+  </head>
+  <body>
+    <!--
+      使い方（超簡単版）
+      1) このファイルをそのまま GitHub Pages / Netlify / Vercel で公開（HTTPS）
+      2) スマホでURLを開く → カメラ許可 → マーカー（hiro）を映すと3D/動画が出ます
+      3) 自作マーカーに変える場合は <a-marker> の設定を preset="custom" にし、pattern(.patt)を差し替え
+    -->
+
+    <a-scene
+      embedded
+      renderer="colorManagement: true"
+      arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;" 
+      vr-mode-ui="enabled: false"
+    >
+      <a-assets>
+        <!-- 3Dモデル（glTF）と動画を事前に /assets 配下へ置く。無ければコメントアウトでOK -->
+        <a-asset-item id="model" src="assets/model.glb"></a-asset-item>
+        <!-- ↑ ここに変換済みの GLB を配置（例: assets/your_model.glb）。
+             別名にした場合は id="model" の src を合わせて変更すること -->
+        <video id="promo" src="assets/promo.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
+      </a-assets>
+
+      <!-- まずは既成の Hiro マーカーで動作確認（印刷マーカーを名刺/チラシに載せる） -->
+      <a-marker preset="hiro">
+        <!-- 3Dモデル表示（無い場合はコメントアウト） -->
+        <a-entity id="ar-model" gltf-model="#model" position="0 0 0" rotation="0 0 0" scale="0.2 0.2 0.2" animation-mixer="clip: *; loop: repeat; timeScale: 1"></a-entity>
+        <a-entity light="type: ambient; intensity: 1"></a-entity>
+        <!-- 動画プレーヤー（無い場合はコメントアウト） -->
+        <a-video src="#promo" width="1" height="0.5625" position="0 0.5 0"></a-video>
+        <!-- 画像やテキストの例 -->
+        <a-text value="Hello AR!" color="#ffffff" position="0 0.1 0" align="center"></a-text>
+      </a-marker>
+
+      <!-- カメラ -->
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <!--
+      自作マーカーに切り替える方法：
+      1) AR.jsのマーカー生成ツール等で .patt を作成（高コントラストな正方形画像が◎）
+      2) 生成した pattern を ./markers/custom.patt として保存
+      3) 下記の a-marker を使い、上の <a-marker preset="hiro"> はコメントアウト
+
+      例：
+      <a-marker type="pattern" url="markers/custom.patt">
+        <a-entity gltf-model="#model" scale="0.2 0.2 0.2"></a-entity>
+      </a-marker>
+    -->
+
+    <!--
+      ヒント：
+      - 名刺/チラシ印刷時は、マーカーの正方形を最低30〜40mm角、余白をしっかり確保
+      - グロスPP等の強い光沢は反射でトラッキングが不安定に。できればマット紙
+      - 動画は .mp4 (H.264/AAC) で短尺＆軽量化、muted + playsinline で自動再生
+      - iOSはユーザー操作が必要な場合あり（タップで再生開始のUIを置くと安心）
+      - HTTPS必須（カメラアクセスのため）。GitHub Pages なら自動でHTTPS
+    -->
+    <script>
+      // ---- iOS等での動画自動再生対策：初回タップで再生開始 ----
+      (function(){
+        var video = document.getElementById('promo');
+        if(!video) return;
+        const tryPlay = () => { video.muted = true; video.play().catch(()=>{}); };
+        document.addEventListener('click', tryPlay, { once: true });
+        document.addEventListener('touchstart', tryPlay, { once: true });
+      })();
+
+      // ---- 追加：アニメーション再生制御の例（必要なときだけ使う） ----
+      // const model = document.getElementById('ar-model');
+      // model.setAttribute('animation-mixer', 'timeScale: 0'); // 一時停止
+      // model.setAttribute('animation-mixer', 'timeScale: 1'); // 再開
+    </script>
+  </body>
+</html>
